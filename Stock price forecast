@@ -1,0 +1,75 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn import preprocessing
+from keras.models import Sequential
+from keras.layers.core import Dense, Activation
+from keras.layers.recurrent import LSTM
+import seaborn as sns
+sns.set_style('whitegrid')
+%matplotlib inline
+# Yahooからデータを読み込めるようにします
+from pandas_datareader import DataReader
+# Pythonで日付と時刻を扱うためのモジュールです
+from datetime import datetime
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn import preprocessing
+from keras.models import Sequential
+from keras.layers.core import Dense, Activation
+from keras.layers.recurrent import LSTM
+import seaborn as sns
+sns.set_style('whitegrid')
+%matplotlib inline
+# Yahooからデータを読み込めるようにします
+from pandas_datareader import DataReader
+# Pythonで日付と時刻を扱うためのモジュールです
+from datetime import datetime
+
+# 所謂ハイテク企業の株価を扱ってみます。
+tech_list = ['AAPL','GOOG','MSFT','AMZN','XOM','IBM']
+
+# 直近1年間のデータを使ってみましょう。
+end = datetime.now()
+start = datetime(end.year - 5,end.month,end.day)
+
+# それぞれの企業ごとに、Yahooのサイトからデータを取得します
+for stock in tech_list:   
+    # それぞれの名前でDataFrameを作ります。
+    globals()[stock] = DataReader(stock,'yahoo',start,end)
+
+if __name__ == "__main__":
+
+  prediction = Prediction()
+
+  # データ準備
+  data = AAPL
+  #for year in range(2011, 2018):
+   #   data_ = pd.read_csv('1547_' + str(year) +  '.csv',encoding="shift_jis",sep='\t')
+    #  data = data_ if (data is None) else pd.concat([data,data_])
+  #data.columns = ['日付','始値','高値','安値','終値','出来高','終値','調整値']
+  #data['日付'] = pd.to_datetime(data['日付'], format='%Y/%m/%d')
+  
+  # 終値のデータを標準化
+  data['Close'] = preprocessing.scale(data['Close'])
+  data = data.sort_values(by='Date')
+  data = data.reset_index(drop=True)
+  data = data.loc[:, ['Date', 'Close']]
+
+  # 2割をテストデータへ
+  split_pos = int(len(data) * 0.8)
+  x_train, y_train = prediction.load_data(data[['Close']].iloc[0:split_pos], prediction.length_of_sequences)
+  x_test,  y_test  = prediction.load_data(data[['Close']].iloc[split_pos:], prediction.length_of_sequences)
+
+  model = prediction.train(x_train, y_train)
+  
+   predicted = model.predict(x_test)
+  result = pd.DataFrame(predicted)
+  result.columns = ['predict']
+  result['actual'] = y_test
+  #plt.xlabel('')
+  #plt.ylabel('')
+  result.plot(legend=True,figsize=(10,4))
+  plt.show()
